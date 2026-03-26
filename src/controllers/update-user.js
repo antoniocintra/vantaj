@@ -16,12 +16,12 @@ export class UpdateUserController {
     async execute(httpRequest) {
         try {
             const userId = httpRequest.params.userId
-
             const isIdValid = checkIfIdIsValid(userId)
 
             if (!isIdValid) {
                 return invalidUserIdResponse()
             }
+
             const params = httpRequest.body
 
             const allowableFields = [
@@ -44,16 +44,18 @@ export class UpdateUserController {
             if (params.password) {
                 const passwordIsValid = checkIfPasswordIsValid(params.password)
 
-                if (passwordIsValid) {
-                    return invalidPasswordResponse
+                if (!passwordIsValid) {
+                    return invalidPasswordResponse()
                 }
             }
 
             if (params.email) {
-                const emailIsValid = checkIfEmailIsValid(params.email)
+                const isEmailFormatValid = checkIfEmailIsValid(params.email)
 
-                if (!emailIsValid) {
-                    return emailAlreadyInUseResponse(params.email)
+                if (!isEmailFormatValid) {
+                    return badRequest({
+                        message: 'Invalid e-mail format.',
+                    })
                 }
             }
 
@@ -64,8 +66,9 @@ export class UpdateUserController {
             return ok(updatedUser)
         } catch (error) {
             if (error instanceof EmailAlreadyInUseError) {
-                return badRequest({ message: error.message })
+                return emailAlreadyInUseResponse()
             }
+
             console.error(error)
             return serverError()
         }
